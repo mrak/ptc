@@ -1,6 +1,6 @@
 {
     "name": "ptc",
-    "description": "Pseudo-terminal Controller - a terminal emulator",
+    "description": "Pseudo-terminal Console - a terminal emulator",
     "version": "1.0.0",
     "repo": "mrak/ptc",
     "license": "MIT",
