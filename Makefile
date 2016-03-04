@@ -1,5 +1,5 @@
 CC=clang
-CFLAGS=-c -Wall -Ideps/chan
+CFLAGS=-c -Wall
 LDFLAGS=
 LDLIBS=-lpthread -lxcb
 EXE=ptc

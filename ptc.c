@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <xcb/xcb.h>
 
-#include "chan.h"
+#include "deps/chan/chan.h"
 
 /*chan_t* jobs;*/
 /*chan_t* done;*/
@@ -59,7 +59,7 @@ typedef struct {
 void *event_listener(void *ptr) {
     event_listener_arg_t *args = (event_listener_arg_t *)ptr;
     xcb_connection_t *connection = args->connection;
-    chan_t *command_queue = args->command_queue;
+    /*chan_t *command_queue = args->command_queue;*/
     xcb_generic_event_t *event;
 
     while ((event = xcb_wait_for_event(connection))) {
@@ -85,40 +85,44 @@ void *event_listener(void *ptr) {
 
 int main() {
     pthread_t el;
+    chan_t *command_queue        = chan_init(20);
 
-    chan_t *command_queue = chan_init(20);
+    // Window creation
     xcb_connection_t *connection = xcb_connect(NULL, NULL);
-    xcb_screen_t *screen = xcb_setup_roots_iterator (xcb_get_setup (connection)).data;
-    xcb_window_t window = xcb_generate_id(connection);
+    xcb_screen_t *screen         = xcb_setup_roots_iterator (xcb_get_setup (connection)).data;
+    xcb_window_t window          = xcb_generate_id(connection);
+    uint32_t mask                = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
+    uint32_t values[2]           = { screen->white_pixel
+                                   , XCB_EVENT_MASK_EXPOSURE
+                                   | XCB_EVENT_MASK_BUTTON_PRESS
+                                   | XCB_EVENT_MASK_BUTTON_RELEASE
+                                   | XCB_EVENT_MASK_POINTER_MOTION
+                                   | XCB_EVENT_MASK_ENTER_WINDOW
+                                   | XCB_EVENT_MASK_LEAVE_WINDOW
+                                   | XCB_EVENT_MASK_KEY_PRESS
+                                   | XCB_EVENT_MASK_KEY_RELEASE
+                                   };
 
-    uint32_t     mask      = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
-    uint32_t     values[2] = { screen->white_pixel
-                             , XCB_EVENT_MASK_EXPOSURE
-                             | XCB_EVENT_MASK_BUTTON_PRESS
-                             | XCB_EVENT_MASK_BUTTON_RELEASE
-                             | XCB_EVENT_MASK_POINTER_MOTION
-                             | XCB_EVENT_MASK_ENTER_WINDOW
-                             | XCB_EVENT_MASK_LEAVE_WINDOW
-                             | XCB_EVENT_MASK_KEY_PRESS
-                             | XCB_EVENT_MASK_KEY_RELEASE
-                             };
+    xcb_create_window( connection
+    /* depth      */ , 0
+    /* win        */ , window
+    /* parent     */ , screen->root
+    /* x, y       */ , 0, 0
+    /* w, h       */ , 150, 150
+    /* border w   */ , 10
+    /* class      */ , XCB_WINDOW_CLASS_INPUT_OUTPUT
+    /* visual     */ , screen->root_visual
+    /* masks      */ , mask, values
+                     );
+    xcb_map_window(connection, window);
+    xcb_flush(connection);
 
-    xcb_create_window ( connection
-    /* depth       */ , 0
-    /* win, parent */ , window, screen->root
-    /* x, y        */ , 0, 0
-    /* w, h        */ , 150, 150
-    /* border w    */ , 10
-    /* class       */ , XCB_WINDOW_CLASS_INPUT_OUTPUT
-    /* visual      */ , screen->root_visual
-    /* masks       */ , mask, values
-                      );
-    xcb_map_window (connection, window);
-    xcb_flush (connection);
-
+    // Listen for window events
     event_listener_arg_t event_listener_arg = {connection, command_queue};
     pthread_create(&el, NULL, event_listener, &event_listener_arg);
     pthread_join(el, NULL);
 
+    // Cleanup
+    chan_dispose(command_queue);
     return 0;
 }
