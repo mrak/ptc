@@ -6,58 +6,27 @@
 
 #include "deps/chan/chan.h"
 
-/*chan_t* jobs;*/
-/*chan_t* done;*/
+enum pt_control_scheme { S7C1T, S8C1T };
+enum color_type { XTERM_256, TRUECOLOR };
 
-/*void* worker()*/
-/*{*/
-    /*// Process jobs until channel is closed.*/
-    /*void* job;*/
-    /*while (chan_recv(jobs, &job) == 0)*/
-    /*{*/
-        /*printf("received job %d\n", (int) job);*/
-    /*}*/
+/* either one of xterm's 256 colors or RGB */
+struct color {
+    enum color_type type;
+    union {
+        unsigned char index;
+        struct {
+            float r, g, b;
+        };
+    };
+};
 
-    /*// Notify that all jobs were received.*/
-    /*printf("received all jobs\n");*/
-    /*chan_send(done, "1");*/
-    /*return NULL;*/
-/*}*/
-
-/*int main()*/
-/*{*/
-/*// Initialize channels.*/
-/*jobs = chan_init(5);*/
-/*done = chan_init(0);*/
-
-/*pthread_t th;*/
-/*pthread_create(&th, NULL, worker, NULL);*/
-
-/*// Send 3 jobs over the jobs channel then close it.*/
-/*int i;*/
-/*for (i = 1; i <= 3; i++)*/
-/*{*/
-/*chan_send(jobs, (void*) (uintptr_t) i);*/
-/*printf("sent job %d\n", i);*/
-/*}*/
-/*chan_close(jobs);*/
-/*printf("sent all jobs\n");*/
-
-/*// Wait for all jobs to be received.*/
-/*chan_recv(done, NULL);*/
-
-/*// Clean up channels.*/
-/*chan_dispose(jobs);*/
-/*chan_dispose(done);*/
-/*}*/
-
-typedef struct {
+struct event_listener_arg {
     xcb_connection_t *connection;
     chan_t *command_queue;
-} event_listener_arg_t;
+};
 
 void *event_listener(void *ptr) {
-    event_listener_arg_t *args = (event_listener_arg_t *)ptr;
+    struct event_listener_arg *args = (struct event_listener_arg *)ptr;
     xcb_connection_t *connection = args->connection;
     /*chan_t *command_queue = args->command_queue;*/
     xcb_generic_event_t *event;
@@ -118,7 +87,7 @@ int main() {
     xcb_flush(connection);
 
     // Listen for window events
-    event_listener_arg_t event_listener_arg = {connection, command_queue};
+    struct event_listener_arg event_listener_arg = {connection, command_queue};
     pthread_create(&el, NULL, event_listener, &event_listener_arg);
     pthread_join(el, NULL);
 
