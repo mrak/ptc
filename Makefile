@@ -1,7 +1,7 @@
 CC=clang
 CFLAGS=-c -Wall -Ideps/chan
 LDFLAGS=
-LDLIBS=-lpthread
+LDLIBS=-lpthread -lxcb
 EXE=ptc
 SRCS := $(wildcard *.c)
 DEPS := $(wildcard deps/chan/*.c)

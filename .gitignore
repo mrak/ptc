@@ -31,6 +31,5 @@
 # Debug files
 *.dSYM/
 
-# Clib
-deps/
+# executable
 ptc
