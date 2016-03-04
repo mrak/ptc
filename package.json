@@ -1,0 +1,13 @@
+{
+    "name": "ptc",
+    "description": "Pseudo-terminal Controller - a terminal emulator",
+    "version": "1.0.0",
+    "repo": "mrak/ptc",
+    "license": "MIT",
+    "src": [
+        "src/ptc.c"
+    ],
+    "dependencies": {
+        "tylertreat/chan": "0.0.4"
+    }
+}
